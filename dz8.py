@@ -1,4 +1,9 @@
 import sqlite3
+import os
+
+# Удаляем существующий файл базы данных, если он есть
+if os.path.exists('.venv/person.db'):
+    os.remove('.venv/person.db')
 
 with sqlite3.connect('.venv/person.db') as conn:
     cursor = conn.cursor()
@@ -15,18 +20,19 @@ with sqlite3.connect('.venv/person.db') as conn:
         DepartmentName TEXT NOT NULL
     )''')
 
-with sqlite3.connect('.venv/person.db') as conn:
-    cursor = conn.cursor()
     cursor.execute('''INSERT INTO Departments (DepartmentName) VALUES
         ('HR'),
-        ('Engineering'),
-        ('Marketing')
+        ('Sales'),
+        ('IT')
     ''')
 
     cursor.execute('''INSERT INTO Employees (FirstName, LastName, DepartmentID) VALUES
-        ('John', 'Doe', 1),
-        ('Jane', 'Smith', 2),
-        ('Emily', 'Jones', 3)
+        ('Вася', 'Пупкин', 1),
+        ('Сакиш', 'Бопуш', 2),
+        ('Джеймс', 'Бонд', 3),
+        ('Стервелла', 'Де Виль', 1),
+        ('Странствующий', 'Торговец', 2),
+        ('Мамкин', 'Программист', 3)
     ''')
 
     conn.commit()
@@ -34,23 +40,37 @@ with sqlite3.connect('.venv/person.db') as conn:
 with sqlite3.connect('.venv/person.db') as conn:
     cursor = conn.cursor()
 
-    department_id = int(input('Введите ID отдела (числа от 1 до 9) для получения информации: '))
+    # Вывод всех сотрудников
+    cursor.execute('''
+        SELECT Employees.FirstName, Employees.LastName, Departments.DepartmentName
+        FROM Employees
+        JOIN Departments ON Employees.DepartmentID = Departments.DepartmentID
+    ''')
 
-    cursor.execute('''SELECT DepartmentName FROM Departments WHERE DepartmentID = ?''', (department_id,))
-    department_name = cursor.fetchone()
+    all_employees = cursor.fetchall()
 
-    if department_name:
-        print(f'Отдел: {department_name[0]}')
-
-        cursor.execute('''SELECT FirstName, LastName FROM Employees WHERE DepartmentID = ?''', (department_id,))
-        employees = cursor.fetchall()
-
-        if employees:
-            print('Сотрудники:')
-            for emp in employees:
-                print(f'{emp[0]} {emp[1]}')
-        else:
-            print('В этом отделе нет сотрудников.')
+    if all_employees:
+        print('Список всех сотрудников:')
+        for emp in all_employees:
+            print(f'{emp[0]} {emp[1]} - {emp[2]}')
     else:
-        print('Отдел с таким ID не найден.')
+        print('Сотрудников не найдено.')
 
+    print('\n' + '-' * 40 + '\n')  # Разделитель
+
+    # Вывод сотрудников отдела IT
+    cursor.execute('''
+        SELECT Employees.FirstName, Employees.LastName
+        FROM Employees
+        JOIN Departments ON Employees.DepartmentID = Departments.DepartmentID
+        WHERE Departments.DepartmentName = 'IT'
+    ''')
+
+    it_employees = cursor.fetchall()
+
+    if it_employees:
+        print('Список всех сотрудников, работающих в отделе "IT":')
+        for emp in it_employees:
+            print(f'{emp[0]} {emp[1]}')
+    else:
+        print('В отделе "IT" нет сотрудников.')
