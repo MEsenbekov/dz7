@@ -1,0 +1,5 @@
+lesson8.py
+.idea
+.venv
+__pycache__\
+games.db
